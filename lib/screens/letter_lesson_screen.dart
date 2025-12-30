@@ -333,7 +333,7 @@ class _LessonScreenState extends State<LessonScreen>
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: () {
-                            print('Playing audio...');
+                            // TODO: Implement audio playback
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
@@ -534,7 +534,7 @@ class _LessonScreenState extends State<LessonScreen>
                       padding: const EdgeInsets.only(right: 16),
                       child: OutlinedButton(
                         onPressed: () {
-                          print('Skip tapped');
+                          // TODO: Implement skip functionality
                         },
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(
