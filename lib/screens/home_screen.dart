@@ -342,7 +342,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: isDark ? Colors.white : Colors.white,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -352,10 +352,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
             ],
           ),
-          child: Text(
+          child: const Text(
             'ابدأ هنا!',
             style: TextStyle(
-              color: isDark ? Colors.black87 : Colors.black87,
+              color: Colors.black87,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
