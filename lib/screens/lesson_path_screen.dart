@@ -10,212 +10,112 @@ class LearningPathScreen extends StatefulWidget {
 }
 
 class _LearningPathScreenState extends State<LearningPathScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _pulseController;
+  late AnimationController _floatController;
+  int _selectedNavIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration:  const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _floatController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF112117),
-      body: Stack(
-        children: [
-          // Background decorations
-          _buildBackgroundDecorations(),
-
-          // Main content with proper scrolling
-          Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.only(
-                    bottom: 100, // Space for bottom navigation
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: isDark ? const Color(0xFF221910) : const Color(0xFFF8F7F5),
+        body: Stack(
+          children: [
+            // Main content
+            Column(
+              children: [
+                _buildStickyHeader(isDark),
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 120),
+                    child: Center(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 480),
+                        child: Column(
+                          children: [
+                            _buildUnitCard(isDark),
+                            _buildLearningPath(isDark),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  child: _buildPathMap(),
                 ),
-              ),
-            ],
-          ),
-
-          // Bottom Navigation
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    const Color(0xFF112117).withOpacity(0.0),
-                    const Color(0xFF112117).withOpacity(0.9),
-                    const Color(0xFF112117),
-                  ],
-                ),
-              ),
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                bottom: MediaQuery.of(context).padding.bottom + 16,
-                top: 16,
-              ),
-              child: _buildBottomNavigation(),
+              ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBackgroundDecorations() {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child:  Opacity(
-          opacity: 0.2,
-          child: Stack(
-            children: [
-              Positioned(
-                top: 80,
-                left: 40,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 160,
-                right: 80,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color:  Color(0xFF36e27b),
-                    shape:  BoxShape.circle,
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom:  240,
-                left: 100,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color:  const Color(0xFFFFC800).withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            
+            // Bottom Navigation
+            _buildBottomNavigation(isDark),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  // Sticky Header with Stats
+  Widget _buildStickyHeader(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF112117).withOpacity(0.9),
-        border: const Border(
+        color: (isDark ? Colors.black : Colors.white).withOpacity(0.95),
+        border: Border(
           bottom: BorderSide(
-            color: Color(0xFF3d5245),
+            color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
             width: 1,
           ),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: SafeArea(
         bottom: false,
-        child:  Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          child: Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
             children: [
-              // Top Row: Unit & Settings
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children:  [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CURRENT UNIT',
-                        style:  TextStyle(
-                          color: const Color(0xFF36e27b),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Unit 1: The Basics',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color:  const Color(0xFF1c3326),
-                      shape:  BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.settings,
-                      color: Colors.white. withOpacity(0.8),
-                      size: 20,
-                    ),
-                  ),
-                ],
+              // Settings icon on LEFT (in RTL, this appears visually on the left)
+              IconButton(
+                icon: const Icon(Icons.settings, size: 24),
+                color: isDark ? Colors.white : Colors.black54,
+                onPressed: () {},
               ),
-              const SizedBox(height:  16),
-              // Stats Row
-              Row(
-                children: [
-                  _buildStatBadge(
-                    icon: Icons.favorite,
-                    color: Colors.red,
-                    value: '5',
-                  ),
-                  const SizedBox(width: 16),
-                  _buildStatBadge(
-                    icon:  Icons.diamond,
-                    color: Color(0xFFFFC800),
-                    value: '142',
-                  ),
-                  const SizedBox(width: 16),
-                  _buildStatBadge(
-                    icon: Icons.electric_bolt,
-                    color:  Color(0xFF36e27b),
-                    value: '3',
-                  ),
-                ],
-              ),
+              const Spacer(),
+              // Stats on RIGHT (in RTL, these appear visually on the right)
+              _buildStatItem(Icons.favorite, const Color(0xFFEF4444), '٥'),
+              const SizedBox(width: 12),
+              _buildStatItem(Icons.diamond, const Color(0xFF1CB0F6), '٤٥٠'),
+              const SizedBox(width: 12),
+              _buildStatItem(Icons.local_fire_department, const Color(0xFFF97316), '٣'),
             ],
           ),
         ),
@@ -223,493 +123,592 @@ class _LearningPathScreenState extends State<LearningPathScreen>
     );
   }
 
-  Widget _buildStatBadge({
-    required IconData icon,
-    required Color color,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1c3326),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF3d5245),
+  Widget _buildStatItem(IconData icon, Color color, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
+      ],
+    );
+  }
+
+  // Unit Card Header
+  Widget _buildUnitCard(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF48C25), Color(0xFFD67618)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF48C25).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+          // Decorative circles
+          Positioned(
+            top: -20,
+            right: -20,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
             ),
+          ),
+          Positioned(
+            bottom: -30,
+            left: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          // Content
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'الوحدة الأولى',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'الحروف الأساسية: أ، ب، ت',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.95),
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.menu_book,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPathMap() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 48),
+  // Learning Path
+  Widget _buildLearningPath(bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       child: Column(
         children: [
-          // Locked Node (Ta - Two Dots)
-          _buildLockedNode(
-            label: 'Ta - Two Dots',
-            offsetX: 40,
-          ),
-
-          const SizedBox(height: 32),
-
-          // Bonus Chest
-          Transform.translate(
-            offset: const Offset(-50, 0),
-            child: Transform.rotate(
-              angle: -0.17, // ~-10 degrees
-              child: _buildBonusChest(),
-            ),
-          ),
-
-          const SizedBox(height: 96),
-
-          // Active Lesson Node (Ba - Jump)
-          _buildActiveNode(),
-
-          const SizedBox(height: 48),
-
-          // Completed Node (Alif)
+          // Completed Star Node #1
           _buildCompletedNode(
-            stars: 3,
-            offsetX: -40,
+            icon: Icons.star,
+            offsetX: 0,
+            isDark: isDark,
           ),
-
+          
+          const SizedBox(height: 32),
+          
+          // Completed Check Node #2 with badge
+          _buildCompletedNodeWithBadge(
+            offsetX: 32,
+            isDark: isDark,
+          ),
+          
           const SizedBox(height: 48),
-
-          // Start Node (Intro)
-          _buildStartNode(offsetX: 30),
-
+          
+          // Current Active Node (درس ٣)
+          _buildActiveNode(isDark),
+          
+          const SizedBox(height: 32),
+          
+          // Locked Node #1
+          _buildLockedNode(
+            offsetX: 32,
+            isDark: isDark,
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Locked Node #2
+          _buildLockedNode(
+            offsetX: 0,
+            isDark: isDark,
+          ),
+          
           const SizedBox(height: 48),
-
-          // More nodes can be added here...
-          // Add more lessons/levels as needed
-          _buildLockedNode(label: 'Tha', offsetX: -30),
-          const SizedBox(height: 48),
-          _buildLockedNode(label: 'Jeem', offsetX: 50),
-          const SizedBox(height: 48),
-          _buildLockedNode(label: 'Ha', offsetX: -40),
-          const SizedBox(height: 48),
-          _buildLockedNode(label: 'Kha', offsetX: 30),
-          const SizedBox(height: 48),
-          _buildLockedNode(label: 'Dal', offsetX: -50),
-          const SizedBox(height: 48),
-          _buildLockedNode(label: 'Thal', offsetX: 40),
-          const SizedBox(height: 48),
+          
+          // Treasure/Reward Box
+          _buildTreasureBox(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildLockedNode({
-    required String label,
+  // Completed Node
+  Widget _buildCompletedNode({
+    required IconData icon,
     required double offsetX,
+    required bool isDark,
   }) {
     return Transform.translate(
       offset: Offset(offsetX, 0),
-      child: Column(
+      child: GestureDetector(
+        onTapDown: (_) => setState(() {}),
+        onTapUp: (_) => setState(() {}),
+        onTapCancel: () => setState(() {}),
+        child: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFC800),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                offset: const Offset(0, 6),
+              ),
+              const BoxShadow(
+                color: Color(0xFFE6B400),
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 40,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Completed Node with Star Badge
+  Widget _buildCompletedNodeWithBadge({
+    required double offsetX,
+    required bool isDark,
+  }) {
+    return Transform.translate(
+      offset: Offset(offsetX, 0),
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Container(
-            width: 80,
+          GestureDetector(
+            onTapDown: (_) => setState(() {}),
+            onTapUp: (_) => setState(() {}),
+            onTapCancel: () => setState(() {}),
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFC800),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    offset: const Offset(0, 6),
+                  ),
+                  const BoxShadow(
+                    color: Color(0xFFE6B400),
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+          ),
+          // Star badge
+          Positioned(
+            top: -4,
+            right: -4,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.star,
+                color: Color(0xFFFFC800),
+                size: 20,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Active Node with Mascot
+  Widget _buildActiveNode(bool isDark) {
+    return Transform.translate(
+      offset: const Offset(-24, 0),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Mascot and Speech Bubble
+          Positioned(
+            top: -70,
+            right: -20,
+            child: AnimatedBuilder(
+              animation: _floatController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, math.sin(_floatController.value * 2 * math.pi) * 5),
+                  child: child,
+                );
+              },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Speech bubble
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'هيا بنا نتعلم!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Mascot
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF48C25).withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 3,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                        ),
+                      ],
+                      image: const DecorationImage(
+                        image: NetworkImage(
+                          'https://lh3.googleusercontent.com/aida-public/AB6AXuAkYt3iISGOYwPq0HE7cF_xzd_xG2YtXd36qsYaQ9Nx_Hd5iqgLV5nkL_Z_-xDLqKdr2nvYazqqhcPcGQ6-k-9dj1G0OO2F1sRi9VeTVP-w5Ub7PvnX9yiKJazxvTyBo2-FGF42deRDdLhibgd0nlHez8p_4YMzc9m4qhoPSx2dznWD1zUo0ued3a3B1SJKEV0SukgH4jUgksW5uOD4JVlk3wrM_HsgO2kaaYIoiSfz3rzkZcwerJxpJcOor6R94i-Npq8MiseOsnk',
+                        ),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Main Content
+          Column(
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Ping animation background
+                  AnimatedBuilder(
+                    animation: _pulseController,
+                    builder: (context, child) {
+                      return Container(
+                        width: 96 + (_pulseController.value * 40),
+                        height: 96 + (_pulseController.value * 40),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFF48C25).withOpacity(0.2 - (_pulseController.value * 0.2)),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  // Ring effect
+                  Container(
+                    width: 112,
+                    height: 112,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFF48C25).withOpacity(0.1),
+                        width: 8,
+                      ),
+                    ),
+                  ),
+                  
+                  // Main button
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LessonScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF48C25),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            offset: const Offset(0, 8),
+                          ),
+                          const BoxShadow(
+                            color: Color(0xFFD67618),
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 48,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'درس ٣',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white60 : Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Locked Node
+  Widget _buildLockedNode({
+    required double offsetX,
+    required bool isDark,
+  }) {
+    return Transform.translate(
+      offset: Offset(offsetX, 0),
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: isDark ? const Color(0xFF1F2937) : const Color(0xFFD1D5DB),
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Icon(
+          Icons.lock,
+          color: isDark ? Colors.grey[600] : Colors.grey[400],
+          size: 40,
+        ),
+      ),
+    );
+  }
+
+  // Treasure Box
+  Widget _buildTreasureBox(bool isDark) {
+    return Column(
+      children: [
+        GestureDetector(
+          onTapDown: (_) => setState(() {}),
+          onTapUp: (_) => setState(() {}),
+          onTapCancel: () => setState(() {}),
+          child: Container(
+            width: 96,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF1c3326),
-              shape:  BoxShape.circle,
-              border: Border.all(
-                color: const Color(0xFF3d5245),
-                width: 4,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFBBF24), Color(0xFFF97316)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius:  10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.15),
+                  offset: const Offset(0, 6),
+                ),
+                const BoxShadow(
+                  color: Color(0xFFEA580C),
+                  offset: Offset(0, 6),
                 ),
               ],
             ),
             child: const Icon(
-              Icons.lock,
-              color: Color(0xFF3d5245),
-              size: 36,
-            ),
-          ),
-          const SizedBox(height:  8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF112117).withOpacity(0.8),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child:  Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFF5c7a69),
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBonusChest() {
-    return Container(
-      width: 64,
-      height: 64,
-      decoration: BoxDecoration(
-        color: const Color(0xFF3d5245),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color:  Colors.black.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Icon(
-        Icons.inventory_2,
-        color: Colors.white. withOpacity(0.5),
-        size: 32,
-      ),
-    );
-  }
-
-  Widget _buildActiveNode() {
-  return Stack(
-    clipBehavior: Clip.none,
-    children: [
-      // Speech Bubble
-      Positioned(
-        top: -48,
-        right: 16,
-        child: TweenAnimationBuilder(
-          tween: Tween<double>(begin: 0, end: 10),
-          duration: const Duration(seconds: 2),
-          builder: (context, double value, child) {
-            return Transform.translate(
-              offset: Offset(0, math.sin(value) * 5),
-              child: child,
-            );
-          },
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 140),
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color:  Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-              ),
-              boxShadow:  [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius:  10,
-                  offset:  Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Text(
-              "Let's learn Ba! ",
-              style: TextStyle(
-                color: Color(0xFF112117),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+              Icons.inventory_2,
+              color: Colors.white,
+              size: 48,
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          'كنز الوحدة',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+      ],
+    );
+  }
 
-      // Mascot
-      Positioned(
-        top: -8,
-        right: -8,
+  // Bottom Navigation Bar
+  Widget _buildBottomNavigation(bool isDark) {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Center(
         child: Container(
-          width: 96,
-          height: 96,
+          constraints: const BoxConstraints(maxWidth: 480),
+          margin: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF36e27b),
-              width: 2,
+            color: isDark ? Colors.black : Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
+                width: 2,
+              ),
+            ),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF36e27b).withOpacity(0.4),
+                color: Colors.black.withOpacity(0.03),
                 blurRadius: 20,
+                offset: const Offset(0, -5),
               ),
             ],
-            image: const DecorationImage(
-              image: NetworkImage(
-                'https://images.unsplash.com/photo-1599557621743-982194600109?q=80&w=200&auto=format&fit=crop',
-              ),
-              fit: BoxFit.cover,
-            ),
           ),
-        ),
-      ),
-
-      // Active Button with Ripple
-      Column(
-        children: [
-          Stack(
-            alignment: Alignment.center,
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // Ripple effect
-              AnimatedBuilder(
-                animation: _pulseController,
-                builder: (context, child) {
-                  return Container(
-                    width: 96 + (_pulseController.value * 20),
-                    height: 96 + (_pulseController.value * 20),
-                    decoration: BoxDecoration(
-                      shape:  BoxShape.circle,
-                      color: const Color(0xFF36e27b)
-                          .withOpacity(0.2 - (_pulseController.value * 0.2)),
-                    ),
-                  );
-                },
-              ),
-
-              // Main Button
-              GestureDetector(
+              _buildNavItem(
+                icon: Icons.home,
+                label: 'الرئيسية',
+                isActive: true,
+                isDark: isDark,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LessonScreen(),
-                    ),
-                  );
+                  setState(() => _selectedNavIndex = 0);
                 },
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF36e27b),
-                    shape:  BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF36e27b).withOpacity(0.4),
-                        blurRadius:  30,
-                        spreadRadius: 5,
-                      ),
-                      const BoxShadow(
-                        color: Color(0xFF2ab863),
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.star,
-                    color: Color(0xFF112117),
-                    size: 48,
-                  ),
-                ),
               ),
-
-              // Start Label
-              Positioned(
-                bottom: -40,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFF36e27b),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black. withOpacity(0.2),
-                        blurRadius:  10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child:  const Text(
-                    'START',
-                    style: TextStyle(
-                      color: Color(0xFF112117),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
+              _buildNavItem(
+                icon: Icons.fitness_center,
+                label: 'تدريب',
+                isActive: false,
+                isDark: isDark,
+                onTap: () {
+                  setState(() => _selectedNavIndex = 1);
+                },
+              ),
+              _buildNavItem(
+                icon: Icons.shield,
+                label: 'المتصدرين',
+                isActive: false,
+                isDark: isDark,
+                onTap: () {
+                  setState(() => _selectedNavIndex = 2);
+                },
+              ),
+              _buildNavItem(
+                icon: Icons.face,
+                label: 'حسابي',
+                isActive: false,
+                isDark: isDark,
+                hasNotification: true,
+                onTap: () {
+                  setState(() => _selectedNavIndex = 3);
+                },
               ),
             ],
           ),
-        ],
-      ),
-    ],
-  );
-}
-
-  Widget _buildCompletedNode({
-    required int stars,
-    required double offsetX,
-  }) {
-    return Transform.translate(
-      offset: Offset(offsetX, 0),
-      child: Column(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFC800),
-              shape: BoxShape.circle,
-              boxShadow: [
-                const BoxShadow(
-                  color: Color(0xFFe6b400),
-                  offset: Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.check,
-              color: Color(0xFF112117),
-              size: 40,
-            ),
-          ),
-          const SizedBox(height:  8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(
-              stars,
-              (index) => const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 2),
-                child: Icon(
-                  Icons.star,
-                  color: Color(0xFFFFC800),
-                  size: 18,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStartNode({required double offsetX}) {
-    return Transform.translate(
-      offset: Offset(offsetX, 0),
-      child: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFC800).withOpacity(0.8),
-          shape: BoxShape. circle,
-          boxShadow: [
-            const BoxShadow(
-              color: Color(0xFFe6b400),
-              offset: Offset(0, 4),
-            ),
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons. flag,
-          color: Color(0xFF112117),
-          size: 32,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigation() {
-    return Center(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 360),
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1c3326).withOpacity(0.95),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: const Color(0xFF3d5245),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildNavItem(
-              icon: Icons.school,
-              isActive: true,
-              onTap: () {
-                // Already on learning path
-              },
-            ),
-            _buildNavItem(
-              icon: Icons.auto_stories,
-              isActive: false,
-              onTap: () {
-                // Navigate to lesson
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LessonScreen(),
-                  ),
-                );
-              },
-            ),
-            _buildNavItem(
-              icon: Icons.leaderboard,
-              isActive: false,
-              onTap: () {
-                // Navigate back to home
-                Navigator.pop(context);
-              },
-            ),
-            _buildNavItem(
-              icon: Icons.face,
-              isActive: false,
-              onTap: () {
-                // Could navigate to profile or settings
-                Navigator.pop(context);
-              },
-            ),
-          ],
         ),
       ),
     );
@@ -717,108 +716,68 @@ class _LearningPathScreenState extends State<LearningPathScreen>
 
   Widget _buildNavItem({
     required IconData icon,
+    required String label,
     required bool isActive,
+    required bool isDark,
+    bool hasNotification = false,
     VoidCallback? onTap,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: isActive
+            ? const EdgeInsets.symmetric(horizontal: 20, vertical: 8)
+            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFF36e27b).withOpacity(0.15)
+          color: isActive 
+              ? const Color(0xFFF48C25).withOpacity(0.1)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Icon(
-          icon,
-          color: isActive
-              ? const Color(0xFF36e27b)
-              : const Color(0xFF9eb7a8),
-          size: 28,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  icon,
+                  color: isActive
+                      ? const Color(0xFFF48C25)
+                      : (isDark ? Colors.white.withOpacity(0.3) : Colors.grey[400]),
+                  size: 28,
+                ),
+                if (hasNotification)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEF4444),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (isActive) const SizedBox(height: 4),
+            if (isActive)
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFF48C25),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-// Custom painter for the winding path
-class PathLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment. bottomCenter,
-        colors: [
-          const Color(0xFF3d5245),
-          const Color(0xFF36e27b),
-          const Color(0xFFFFC800),
-        ],
-        stops: const [0.0, 0.6, 1.0],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    
-    // Create a winding S-curve path
-    final centerX = size.width / 2;
-    
-    path.moveTo(centerX, size.height - 50);
-    
-    path.cubicTo(
-      centerX + 80, size.height - 150,
-      centerX + 60, size.height - 250,
-      centerX, size.height - 300,
-    );
-    
-    path.cubicTo(
-      centerX - 80, size.height - 350,
-      centerX - 100, size.height - 450,
-      centerX, size.height - 550,
-    );
-    
-    path.cubicTo(
-      centerX + 90, size.height - 650,
-      centerX + 80, size.height - 750,
-      centerX, size.height - 850,
-    );
-
-    // Draw dashed path
-    _drawDashedPath(canvas, path, paint);
-  }
-
-  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
-    const dashWidth = 20.0;
-    const dashSpace = 15.0;
-    
-    paint.color = paint.shader != null 
-        ? Colors.transparent 
-        : paint.color;
-    
-    final metric = path.computeMetrics().first;
-    double distance = 0.0;
-    
-    while (distance < metric.length) {
-      final start = metric.getTangentForOffset(distance)?. position;
-      distance += dashWidth;
-      final end = metric.getTangentForOffset(distance)?.position;
-      
-      if (start != null && end != null) {
-        canvas.drawLine(
-          start,
-          end,
-          paint.. color = const Color(0xFF36e27b).withOpacity(0.4),
-        );
-      }
-      
-      distance += dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+// Remove the old PathLinePainter class - no longer needed
