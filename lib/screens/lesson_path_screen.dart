@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'letter_lesson_screen.dart';
 
 class LearningPathScreen extends StatefulWidget {
@@ -13,11 +12,14 @@ class _LearningPathScreenState extends State<LearningPathScreen>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _floatController;
+  late Animation<double> _floatAnimation;
+  late Animation<double> _pulseAnimation;
   int _selectedNavIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -27,6 +29,15 @@ class _LearningPathScreenState extends State<LearningPathScreen>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
+    
+    // Optimize animations with Tweens
+    _floatAnimation = Tween<double>(begin: -5.0, end: 5.0).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
+    
+    _pulseAnimation = Tween<double>(begin: 0.0, end: 40.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeOut),
+    );
   }
 
   @override
@@ -404,10 +415,10 @@ class _LearningPathScreenState extends State<LearningPathScreen>
             top: -70,
             right: -20,
             child: AnimatedBuilder(
-              animation: _floatController,
+              animation: _floatAnimation,
               builder: (context, child) {
                 return Transform.translate(
-                  offset: Offset(0, math.sin(_floatController.value * 2 * math.pi) * 5),
+                  offset: Offset(0, _floatAnimation.value),
                   child: child,
                 );
               },
@@ -462,6 +473,12 @@ class _LearningPathScreenState extends State<LearningPathScreen>
                         fit: BoxFit.cover,
                       ),
                     ),
+                    // Fallback to icon if image fails to load
+                    child: const Icon(
+                      Icons.pets,
+                      color: Color(0xFFF48C25),
+                      size: 32,
+                    ),
                   ),
                 ],
               ),
@@ -476,14 +493,16 @@ class _LearningPathScreenState extends State<LearningPathScreen>
                 children: [
                   // Ping animation background
                   AnimatedBuilder(
-                    animation: _pulseController,
+                    animation: _pulseAnimation,
                     builder: (context, child) {
+                      final size = 96 + _pulseAnimation.value;
+                      final opacity = 0.2 - (_pulseAnimation.value / 40 * 0.2);
                       return Container(
-                        width: 96 + (_pulseController.value * 40),
-                        height: 96 + (_pulseController.value * 40),
+                        width: size,
+                        height: size,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFF48C25).withOpacity(0.2 - (_pulseController.value * 0.2)),
+                          color: const Color(0xFFF48C25).withOpacity(opacity),
                         ),
                       );
                     },
