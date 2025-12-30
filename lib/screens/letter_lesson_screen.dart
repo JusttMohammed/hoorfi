@@ -359,178 +359,265 @@ class _LessonScreenState extends State<LessonScreen>
     );
   }
 
-  Widget _buildLetterCard() {
-    return Center(
-      child: SizedBox(
-        width: 340,
+  Widget _buildAnswerOptions() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final options = ['أ', 'ب', 'ت', 'ث'];
+    
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.0,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        final isSelected = _selectedOptionIndex == index;
+        final isCorrect = index == 0; // First option is correct (أ)
+        
+        return _buildOptionButton(
+          letter: options[index],
+          isSelected: isSelected && isCorrect,
+          onTap: () {
+            setState(() {
+              _selectedOptionIndex = index;
+            });
+          },
+          isDark: isDark,
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionButton({
+    required String letter,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark 
+                  ? const Color(0xFFf48c25).withOpacity(0.1) 
+                  : const Color(0xFFf48c25).withOpacity(0.05))
+              : (isDark 
+                  ? Colors.white.withOpacity(0.05) 
+                  : Colors.white),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFFf48c25)
+                : (isDark 
+                    ? Colors.white.withOpacity(0.1) 
+                    : const Color(0xFFe6e0db)),
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected 
+                  ? const Color(0xFFf48c25) 
+                  : const Color(0xFFe6e0db),
+              offset: const Offset(0, 4),
+              blurRadius: 0,
+            ),
+          ],
+        ),
         child: Stack(
-          clipBehavior: Clip.none,
           children: [
-            // Mascot character
+            // Letter
+            Center(
+              child: Transform.scale(
+                scale: isSelected ? 1.1 : 1.0,
+                child: Text(
+                  letter,
+                  style: TextStyle(
+                    fontSize: 80,
+                    fontWeight: FontWeight.w900,
+                    color: isSelected 
+                        ? const Color(0xFFf48c25) 
+                        : (isDark ? Colors.white : const Color(0xFF181411)),
+                    height: 1.0,
+                  ),
+                ),
+              ),
+            ),
+            
+            // Volume icon (top-right)
             Positioned(
-              top: -64,
-              right: -16,
-              child: AnimatedBuilder(
-                animation: _bounceController,
-                builder:  (context, child) {
-                  return Transform.translate(
-                    offset: Offset(
-                      0,
-                      math.sin(_bounceController.value * math.pi * 2) * 10,
-                    ),
-                    child: child,
-                  );
-                },
-                child: Container(
-                  width: 128,
-                  height: 128,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: NetworkImage(
-                        'https://lh3.googleusercontent.com/aida-public/AB6AXuDj8jOpH5gokzFdogERa1l1f-Dp-21zuWd13WQNwpTFzjEAOLm5z07PrBxaSh8EC0f4ov65dg3tXHstusYqjrMB5ZMFChT_rqo3wZFjYirQ65IdT1P--P9JO1H4z1G5TZwL84rkQYSX4pN4s-gZwVt52BJlZ9h7MBlRmY2RFu_isnLjHCQMOtpGk7LeNGRrCqOIinkHCFHW4cOgOwcCCVUp8yF4B_CsLM6Ep102vj9N3btfZMgN7YokFOa1lzk0f_exmiMaOrsnME4',
-                      ),
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
+              top: 12,
+              right: 12,
+              child: Icon(
+                Icons.volume_up,
+                size: 20,
+                color: isSelected
+                    ? const Color(0xFFf48c25)
+                    : Colors.grey.withOpacity(0.3),
               ),
             ),
-
-            // The card
-            GestureDetector(
-              onTapDown: (_) => _scaleController.forward(),
-              onTapUp: (_) => _scaleController.reverse(),
-              onTapCancel: () => _scaleController.reverse(),
-              child: AnimatedBuilder(
-                animation: _scaleController,
-                builder:  (context, child) {
-                  return Transform.scale(
-                    scale: _scaleController. value,
-                    child: child,
-                  );
-                },
-                child: AspectRatio(
-                  aspectRatio: 4 / 5,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color:  const Color(0xFF1c2e24),
-                      borderRadius: BorderRadius.circular(48),
-                      border: Border.all(
-                        color: const Color(0xFF2a4034),
-                        width: 6,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.5),
-                          blurRadius:  40,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child:  Stack(
-                      children: [
-                        // Background pattern
-                        Positioned.fill(
-                          child:  Opacity(
-                            opacity: 0.1,
-                            child: CustomPaint(
-                              painter:  DotPatternPainter(),
+            
+            // Check badge (top-left) - only for selected
+            if (isSelected)
+              Positioned(
+                top: -8,
+                left: -8,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 300),
+                  builder: (context, value, child) {
+                    return Transform.scale(
+                      scale: value,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFf48c25),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
+                          ],
                         ),
-
-                        // Letter content
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Arabic letter
-                              const Text(
-                                'أَ',
-                                style: TextStyle(
-                                  fontSize: 160,
-                                  fontWeight:  FontWeight.bold,
-                                  color: Colors.white,
-                                  height: 1.0,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors. black26,
-                                      blurRadius: 20,
-                                      offset:  Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Transliteration
-                              Text(
-                                'Alif',
-                                style:  TextStyle(
-                                  fontSize: 24,
-                                  fontWeight:  FontWeight.bold,
-                                  color: Colors.grey[400],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              // Pronunciation
-                              const Text(
-                                '( a )',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF36e27b),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 18,
                         ),
-
-                        // Audio button
-                        Positioned(
-                          bottom: 24,
-                          right: 24,
-                          child: _buildAudioButton(),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAudioButton() {
+  Widget _buildBottomActionBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasSelection = _selectedOptionIndex != null;
+    
     return Container(
-      width: 64,
-      height: 64,
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF36e27b),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF36e27b).withOpacity(0.4),
-            blurRadius: 20,
-            spreadRadius: 5,
+        color: isDark ? const Color(0xFF2a2018) : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark 
+                ? Colors.white.withOpacity(0.05) 
+                : const Color(0xFFf1f0ed),
+            width: 1,
           ),
-        ],
+        ),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            // Play audio
-            print('Playing audio.. .');
-          },
-          customBorder: const CircleBorder(),
-          child: const Center(
-            child: Icon(
-              Icons.volume_up,
-              color: Color(0xFF112117),
-              size: 32,
+      child: SafeArea(
+        top: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Row(
+                children: [
+                  // Skip button (hidden on mobile, visible on md+)
+                  if (MediaQuery.of(context).size.width > 600)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: OutlinedButton(
+                        onPressed: () {
+                          print('Skip tapped');
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: isDark 
+                                ? Colors.white.withOpacity(0.1) 
+                                : const Color(0xFFe6e0db),
+                            width: 2,
+                          ),
+                          foregroundColor: isDark 
+                              ? Colors.white.withOpacity(0.5)
+                              : const Color(0xFF8a7560),
+                          minimumSize: const Size(100, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'تخطى',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  
+                  // Check button (Primary action)
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: hasSelection ? () {
+                        // Show confetti briefly
+                        setState(() {
+                          _showConfetti = true;
+                        });
+                        
+                        // Navigate to reward screen after a short delay
+                        Future.delayed(const Duration(milliseconds: 1500), () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RewardScreen(
+                                coinsEarned: 50,
+                                totalXP: 120,
+                                streakDays: 12,
+                                celebrationText: 'Mumtaz!',
+                              ),
+                            ),
+                          );
+                        });
+                      } : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hasSelection 
+                            ? const Color(0xFFf48c25) 
+                            : (isDark 
+                                ? Colors.white.withOpacity(0.1) 
+                                : const Color(0xFFe6e0db)),
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: isDark 
+                            ? Colors.white.withOpacity(0.1) 
+                            : const Color(0xFFe6e0db),
+                        disabledForegroundColor: isDark 
+                            ? Colors.white.withOpacity(0.3)
+                            : const Color(0xFF8a7560),
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: hasSelection ? 8 : 0,
+                        shadowColor: hasSelection 
+                            ? const Color(0xFFf48c25).withOpacity(0.3) 
+                            : Colors.transparent,
+                      ),
+                      child: const Text(
+                        'تحقق',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
