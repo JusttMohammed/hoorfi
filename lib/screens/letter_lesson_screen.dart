@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'reward_screen.dart';
-import 'tracing_activity_screen.dart';
-
 
 class LessonScreen extends StatefulWidget {
   const LessonScreen({Key? key}) : super(key: key);
@@ -13,183 +11,346 @@ class LessonScreen extends StatefulWidget {
 
 class _LessonScreenState extends State<LessonScreen>
     with TickerProviderStateMixin {
-  late AnimationController _bounceController;
-  late AnimationController _scaleController;
   bool _showConfetti = false;
+  int? _selectedOptionIndex;
+  late AnimationController _fadeInController;
+  late Animation<double> _fadeInAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     
-    // Bounce animation for mascot
-    _bounceController = AnimationController(
+    // Fade-in-up animation for question section
+    _fadeInController = AnimationController(
       vsync: this,
-      duration:  const Duration(seconds: 2),
-    )..repeat(reverse: true);
-
-    // Scale animation for card hover effect
-    _scaleController = AnimationController(
-      vsync:  this,
-      duration: const Duration(milliseconds: 300),
-      lowerBound: 1.0,
-      upperBound: 1.05,
+      duration: const Duration(milliseconds: 500),
     );
+
+    _fadeInAnimation = CurvedAnimation(
+      parent: _fadeInController,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _fadeInController,
+      curve: Curves.easeOut,
+    ));
+
+    _fadeInController.forward();
   }
 
   @override
   void dispose() {
-    _bounceController.dispose();
-    _scaleController.dispose();
+    _fadeInController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Main Content
-          Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  child:  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 40),
-                        _buildLetterCard(),
-                        const SizedBox(height: 32),
-                        _buildInteractionButtons(),
-                        const SizedBox(height: 120),
-                      ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: isDark ? const Color(0xFF2a2018) : const Color(0xFFf8f7f5),
+        body: SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height,
+            child: Stack(
+              children: [
+                // Main scrollable content
+                Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 480),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 24,
+                                right: 24,
+                                bottom: 120,
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildHeader(),
+                                  const SizedBox(height: 8),
+                                  _buildQuestionSection(),
+                                  const SizedBox(height: 32),
+                                  _buildAnswerOptions(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ),
-            ],
-          ),
 
-          // Bottom Action Bar
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right:  0,
-            child: _buildBottomActionBar(),
-          ),
+                // Bottom Action Bar
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildBottomActionBar(),
+                ),
 
-          // Confetti overlay (when answer is correct)
-          if (_showConfetti) _buildConfettiOverlay(),
-        ],
+                // Confetti overlay (when answer is correct)
+                if (_showConfetti) _buildConfettiOverlay(),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return SafeArea(
-      bottom: false,
-      child:  Padding(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-        child: Column(
-          children: [
-            // Top bar with close button, progress, and hearts
-            Row(
-              children:  [
-                // Close button
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon:  const Icon(
-                    Icons.close,
-                    color: Colors.grey,
-                    size: 32,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        children: [
+          // Close button (LEFT side in RTL)
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+            color: Colors.grey,
+            iconSize: 32,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
 
-                const SizedBox(width: 16),
+          const SizedBox(width: 16),
 
-                // Progress bar
-                Expanded(
-                  child:  Container(
+          // Progress bar (CENTER)
+          Expanded(
+            child: Container(
+              height: 16,
+              decoration: BoxDecoration(
+                color: isDark 
+                  ? Colors.white.withOpacity(0.1) 
+                  : const Color(0xFFf1f0ed),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Stack(
+                children: [
+                  // Filled portion
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 500),
+                    width: MediaQuery.of(context).size.width * 0.4,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1c2e24),
+                      color: const Color(0xFFf48c25),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Stack(
                       children: [
-                        FractionallySizedBox(
-                          widthFactor: 0.35,
+                        // Highlight bar
+                        Positioned(
+                          top: 4,
+                          right: 8,
                           child: Container(
+                            width: 20,
+                            height: 4,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF36e27b),
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFF36e27b).withOpacity(0.5),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 8, top: 4),
-                                child: Container(
-                                  width: 8,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white. withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          // Hearts indicator (RIGHT side in RTL)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark 
+                ? const Color(0xFF7f1d1d).withOpacity(0.2)
+                : const Color(0xFFfee2e2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(
+                  Icons.favorite,
+                  color: Color(0xFFef4444),
+                  size: 28,
                 ),
+                SizedBox(width: 4),
+                Text(
+                  '5',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFef4444),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                const SizedBox(width: 16),
+  Widget _buildQuestionSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return FadeTransition(
+      opacity: _fadeInAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Mascot image (LEFT side in RTL)
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFf48c25).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Transform.scale(
+                  scale: 2.0,
+                  child: Image.network(
+                    'https://lh3.googleusercontent.com/aida-public/AB6AXuAkYt3iISGOYwPq0HE7cF_xzd_xG2YtXd36qsYaQ9Nx_Hd5iqgLV5nkL_Z_-xDLqKdr2nvYazqqhcPcGQ6-k-9dj1G0OO2F1sRi9VeTVP-w5Ub7PvnX9yiKJazxvTyBo2-FGF42deRDdLhibgd0nlHez8p_4YMzc9m4qhoPSx2dznWD1zUo0ued3a3B1SJKEV0SukgH4jUgksW5uOD4JVlk3wrM_HsgO2kaaYIoiSfz3rzkZcwerJxpJcOor6R94i-Npq8MiseOsnk',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.person, size: 40, color: Color(0xFFf48c25));
+                    },
+                  ),
+                ),
+              ),
+            ),
 
-                // Hearts
-                Row(
-                  children: const [
-                    Icon(
-                      Icons.favorite,
-                      color: Colors.red,
-                      size: 24,
+            const SizedBox(width: 16),
+
+            // Speech bubble (RIGHT side in RTL)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.white,
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : const Color(0xFFe6e0db),
+                    width: 2,
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    topRight: Radius.circular(0),
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    SizedBox(width: 4),
-                    Text(
-                      '5',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'سؤال جديد',
+                          style: TextStyle(
+                            color: isDark 
+                              ? Colors.white.withOpacity(0.5)
+                              : const Color(0xFF8a7560),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : const Color(0xFF181411),
+                              height: 1.4,
+                            ),
+                            children: const [
+                              TextSpan(text: 'أي من هذه الحروف هو '),
+                              TextSpan(
+                                text: 'أ',
+                                style: TextStyle(
+                                  color: Color(0xFFf48c25),
+                                  fontSize: 32,
+                                ),
+                              ),
+                              TextSpan(text: '؟'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Audio button
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: Material(
+                        color: const Color(0xFFf48c25).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          onTap: () {
+                            print('Playing audio...');
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.volume_up,
+                              color: Color(0xFFf48c25),
+                              size: 24,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-
-            const SizedBox(height:  16),
-
-            // Lesson title
-            Text(
-              'LESSON 1: LETTER ALIF',
-              style:  TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 1.5,
               ),
             ),
           ],
@@ -377,174 +538,6 @@ class _LessonScreenState extends State<LessonScreen>
     );
   }
 
-  Widget _buildInteractionButtons() {
-  return SizedBox(
-    width: 340,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildInteractionButton(
-          icon: Icons.edit,
-          label: 'Trace',
-          onTap:  () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const TracingScreen(),
-              ),
-            );
-          },
-        ),
-        _buildInteractionButton(
-          icon: Icons.search,
-          label: 'Find',
-          onTap: () {
-            print('Find tapped');
-          },
-        ),
-        _buildInteractionButton(
-          icon: Icons.mic,
-          label: 'Speak',
-          onTap:  () {
-            print('Speak tapped');
-          },
-        ),
-      ],
-    ),
-  );
-}
-
-  Widget _buildInteractionButton({
-  required IconData icon,
-  required String label,
-  required VoidCallback onTap,
-}) {
-  return Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap:  onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1c2e24),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFF2a4034),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius:  10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(
-              icon,
-              color: Colors.grey[400],
-              size: 32,
-            ),
-          ),
-          const SizedBox(height:  8),
-          Text(
-            label. toUpperCase(),
-            style:  TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[400],
-              letterSpacing: 1.2,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _buildBottomActionBar() {
-  return Container(
-    decoration: BoxDecoration(
-      color: const Color(0xFF112117).withOpacity(0.95),
-      border: const Border(
-        top: BorderSide(
-          color: Colors. white10,
-          width: 1,
-        ),
-      ),
-    ),
-    child: SafeArea(
-      top: false,
-      child:  Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: ElevatedButton(
-              onPressed: () {
-                // Show confetti briefly
-                setState(() {
-                  _showConfetti = true;
-                });
-                
-                // Navigate to reward screen after a short delay
-                Future.delayed(const Duration(milliseconds: 1500), () {
-                  Navigator. pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RewardScreen(
-                        coinsEarned: 50,
-                        totalXP: 120,
-                        streakDays: 12,
-                        celebrationText: 'Mumtaz! ',
-                      ),
-                    ),
-                  );
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF36e27b),
-                foregroundColor: const Color(0xFF112117),
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius. circular(30),
-                ),
-                elevation:  0,
-                shadowColor:  Colors.transparent,
-              ).copyWith(
-                overlayColor:  MaterialStateProperty.all(
-                  const Color(0xFF2cc968),
-                ),
-              ),
-              child: Container(
-                decoration: const BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFF25a256),
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Text(
-                  'CHECK',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
   Widget _buildConfettiOverlay() {
     return Positioned.fill(
       child: IgnorePointer(
@@ -560,28 +553,6 @@ Widget _buildBottomActionBar() {
       ),
     );
   }
-}
-
-// Custom painter for dot pattern background
-class DotPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF36e27b)
-      ..style = PaintingStyle.fill;
-
-    const spacing = 20.0;
-    const dotSize = 1.0;
-
-    for (double x = 0; x < size. width; x += spacing) {
-      for (double y = 0; y < size.height; y += spacing) {
-        canvas.drawCircle(Offset(x, y), dotSize, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // Confetti particle widget
@@ -616,7 +587,7 @@ class _ConfettiParticleState extends State<_ConfettiParticle>
     _rotation = random.nextDouble() * math.pi * 4;
     
     final colors = [
-      const Color(0xFF36e27b),
+      const Color(0xFFf48c25),
       const Color(0xFFFFC800),
       const Color(0xFF4aa9ff),
       Colors.red,
